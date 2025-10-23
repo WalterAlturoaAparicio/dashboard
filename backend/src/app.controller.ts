@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common'
+import { Controller, Get, Post, Put, Query } from '@nestjs/common'
 import { BalotoService } from './baloto.service'
 
 @Controller()
@@ -24,5 +24,17 @@ export class AppController {
       numTickets,
     )
     return tickets
+  }
+
+  @Put('load')
+  async loadHistory() {
+    const conteo = await this.balotoService.loadHistoricalData()
+    return conteo
+  }
+
+  @Post('refresh')
+  async refreshHistory() {
+    const conteo = await this.balotoService.getResultsFromFirstPage()
+    return conteo
   }
 }

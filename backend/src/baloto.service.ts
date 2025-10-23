@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
 import axios from 'axios'
 import * as cheerio from 'cheerio'
+import { Sorteo } from './database/sorteo.entity'
+import { MoreThan, Repository } from 'typeorm'
 
 type SorteoConteo = {
   numeros: Record<string, number>
@@ -13,7 +16,6 @@ type SorteoConteo = {
 type Resultado = {
   baloto: SorteoConteo
   revancha: SorteoConteo
-  paginasVisitadas: number
 }
 
 @Injectable()
@@ -21,89 +23,49 @@ export class BalotoService {
   private readonly BASE_URL = 'https://baloto.com/resultados'
   private readonly logger = new Logger(BalotoService.name)
 
+  constructor(
+    @InjectRepository(Sorteo)
+    private readonly sorteoRepository: Repository<Sorteo>,
+  ) {}
+
   async getResults(targetDate?: string): Promise<Resultado> {
     const resultado: Resultado = {
       baloto: { numeros: {}, superbalotas: {}, totalSorteos: 0 },
       revancha: { numeros: {}, superbalotas: {}, totalSorteos: 0 },
-      paginasVisitadas: 0,
     }
 
-    let page = 1
-    let keepScraping = true
+    const where: any = {}
+    if (targetDate) {
+      const fechaTarget = new Date(targetDate)
+      where.fecha = MoreThan(fechaTarget)
+    }
 
-    while (keepScraping) {
-      const url = `${this.BASE_URL}?page=${page}`
-      this.logger.debug(`Scrapeando página ${page}: ${url}`)
-      const { data: html } = await axios.get(url)
-      const $ = cheerio.load(html)
+    // Consulta todos los sorteos desde la base
+    const sorteos = await this.sorteoRepository.find({ where })
 
-      resultado.paginasVisitadas++
-
-      const rows = $('#results-table tbody tr')
-      if (rows.length === 0) break
-
-      rows.each((_, row) => {
-        const date = $(row).find('.creation-date-results').first().text().trim()
-        const typeImg = $(row).find('td img').attr('src') || ''
-        const isBaloto = typeImg.includes('baloto-kind.png')
-        const isRevancha = typeImg.includes('revancha-kind.png')
-
-        const tdNumeros = $(row).find('td').eq(2)
-        const rawNumbers = tdNumeros.text().replace(/\s+/g, '')
-        const numbers = rawNumbers.match(/\d+/g) || []
-
-        const sorteo = isBaloto
+    for (const s of sorteos) {
+      const sorteoConteo =
+        s.tipo === 'baloto'
           ? resultado.baloto
-          : isRevancha
+          : s.tipo === 'revancha'
           ? resultado.revancha
           : null
-        if (!sorteo) return
+      if (!sorteoConteo) continue
 
-        if (targetDate) {
-          const fechaActual = this.parseSpanishDate(date)
-          const fechaTarget = new Date(targetDate)
-          if (fechaActual <= fechaTarget) return
-        }
-
-        // Contar números (los 5 primeros)
-        numbers.slice(0, 5).forEach((n) => {
-          sorteo.numeros[n] = (sorteo.numeros[n] || 0) + 1
-        })
-
-        // Contar superbalota (último número)
-        const superbalota = numbers[5]
-        if (superbalota) {
-          sorteo.superbalotas[superbalota] =
-            (sorteo.superbalotas[superbalota] || 0) + 1
-        }
-
-        sorteo.totalSorteos++
+      // Contar números (los 5 primeros)
+      s.numeros.forEach((n) => {
+        const key = n.toString()
+        sorteoConteo.numeros[key] = (sorteoConteo.numeros[key] || 0) + 1
       })
 
-      if (targetDate) {
-        const fechaTarget = new Date(targetDate)
-        const hayFechasPosteriores = $('#results-table tbody tr')
-          .toArray()
-          .some((row) => {
-            const dateStr = $(row)
-              .find('.creation-date-results')
-              .first()
-              .text()
-              .trim()
-            const fechaActual = this.parseSpanishDate(dateStr)
-            return fechaActual > fechaTarget
-          })
+      // Contar superbalota
+      const superKey = s.superbalota.toString()
+      sorteoConteo.superbalotas[superKey] =
+        (sorteoConteo.superbalotas[superKey] || 0) + 1
 
-        keepScraping = hayFechasPosteriores
-        page++
-      } else {
-        keepScraping = false
-      }
+      sorteoConteo.totalSorteos++
     }
 
-    this.logger.log(
-      `Scraping terminado. Páginas visitadas: ${resultado.paginasVisitadas}`,
-    )
     return {
       ...resultado,
       baloto: {
@@ -221,5 +183,91 @@ export class BalotoService {
     }
 
     return tickets
+  }
+
+  async getResultsFromFirstPage(): Promise<void> {
+    const url = `${this.BASE_URL}?page=1`
+    const { data: html } = await axios.get(url)
+    const $ = cheerio.load(html)
+
+    const rows = $('#results-table tbody tr').toArray()
+    for (const row of rows) {
+      const date = $(row).find('.creation-date-results').first().text().trim()
+      const typeImg = $(row).find('td img').attr('src') || ''
+      const isBaloto = typeImg.includes('baloto-kind.png')
+      const isRevancha = typeImg.includes('revancha-kind.png')
+
+      const tdNumeros = $(row).find('td').eq(2)
+      const rawNumbers = tdNumeros.text().replace(/\s+/g, '')
+      const numbers = rawNumbers.match(/\d+/g) || []
+
+      const fechaActual = this.parseSpanishDate(date)
+      const tipo = isBaloto ? 'baloto' : isRevancha ? 'revancha' : null
+      if (!tipo) continue
+
+      const existe = await this.sorteoRepository.findOne({
+        where: { fecha: fechaActual, tipo },
+      })
+
+      if (!existe) {
+        await this.sorteoRepository.save({
+          fecha: fechaActual,
+          tipo,
+          numeros: numbers.slice(0, 5).map(Number),
+          superbalota: Number(numbers[5]),
+          fuente: url,
+        })
+      }
+    }
+  }
+
+  async loadHistoricalData(): Promise<void> {
+    let page = 1
+    let keepScraping = true
+
+    while (keepScraping) {
+      const url = `${this.BASE_URL}?page=${page}`
+      this.logger.debug(`Cargando página histórica ${page}: ${url}`)
+
+      const { data: html } = await axios.get(url)
+      const $ = cheerio.load(html)
+
+      const rows = $('#results-table tbody tr').toArray()
+      if (rows.length === 0) break // No más resultados
+
+      for (const row of rows) {
+        const date = $(row).find('.creation-date-results').first().text().trim()
+        const typeImg = $(row).find('td img').attr('src') || ''
+        const isBaloto = typeImg.includes('baloto-kind.png')
+        const isRevancha = typeImg.includes('revancha-kind.png')
+
+        const tdNumeros = $(row).find('td').eq(2)
+        const rawNumbers = tdNumeros.text().replace(/\s+/g, '')
+        const numbers = rawNumbers.match(/\d+/g) || []
+
+        const fechaActual = this.parseSpanishDate(date)
+        const tipo = isBaloto ? 'baloto' : isRevancha ? 'revancha' : null
+        if (!tipo) continue
+
+        const existe = await this.sorteoRepository.findOne({
+          where: { fecha: fechaActual, tipo },
+        })
+
+        if (!existe) {
+          await this.sorteoRepository.save({
+            fecha: fechaActual,
+            tipo,
+            numeros: numbers.slice(0, 5).map(Number),
+            superbalota: Number(numbers[5]),
+            fuente: url,
+          })
+        }
+      }
+
+      page++
+      keepScraping = page <= 92 // o detectarlo dinámicamente
+    }
+
+    this.logger.log('Carga histórica finalizada')
   }
 }
