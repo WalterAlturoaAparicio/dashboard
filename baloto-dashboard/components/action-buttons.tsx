@@ -15,10 +15,11 @@ import { useToast } from "@/hooks/use-toast"
 
 interface ActionButtonsProps {
   onCountBaloto: (data: any) => void
-  onCountRevancha: (data: any) => void
+  onCountSuperbalota: (data: any) => void
   onGenerate: (ticket: number[]) => void
   onRefresh: (date: Date) => void
   onCountTotalSorteos: (total: number) => void
+  onRecentDraws: (draws: Record<string, number[]>[]) => void
   setIsLoadingChart: (loading: boolean) => void
   setIsLoadingTicket: (loading: boolean) => void
   isLoadingChart: boolean
@@ -28,9 +29,10 @@ interface ActionButtonsProps {
 export function ActionButtons({
   onCountBaloto,
   onCountTotalSorteos,
-  onCountRevancha,
+  onCountSuperbalota,
   onGenerate,
   onRefresh,
+  onRecentDraws,
   setIsLoadingChart,
   setIsLoadingTicket,
   isLoadingChart,
@@ -42,10 +44,13 @@ export function ActionButtons({
   const handleCount = async () => {
     setIsLoadingChart(true)
     try {
-      const response = await axios.get(`${apiUrl}/conteo?fecha=2025-01-01`)
-      onCountBaloto(response.data.baloto.numeros)
-      onCountTotalSorteos(response.data.baloto.totalSorteos)
-      onCountRevancha(response.data.revancha.numeros)
+      const conteo = await axios.get(`${apiUrl}/conteo?fecha=2025-01-01&tipo=baloto`)
+      onCountBaloto(conteo.data.numeros)
+      onCountTotalSorteos(conteo.data.totalSorteos)
+      onCountSuperbalota(conteo.data.superbalotas)
+
+      const draws = await axios.get(`${apiUrl}/recent-draws?tipo=baloto&cantidad=3`)
+      onRecentDraws(draws.data)
       toast({
         title: "Conteo actualizado",
         description: "Los datos de frecuencia se han cargado correctamente.",
@@ -65,7 +70,7 @@ export function ActionButtons({
   const handleGenerate = async () => {
     setIsLoadingTicket(true)
     try {
-      const response = await axios.get(`${apiUrl}/generar?fecha=2025-01-01&tickets=1`)
+      const response = await axios.get(`${apiUrl}/generar?tipo=baloto&fecha=2025-01-01&tickets=1`)
       onGenerate([...response.data[0].numeros, response.data[0].superbalota])
       toast({
         title: "Ticket generado",

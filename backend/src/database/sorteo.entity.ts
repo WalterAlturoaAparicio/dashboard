@@ -1,3 +1,4 @@
+import { Tipo } from 'src/baloto.service'
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -16,7 +17,7 @@ export class Sorteo {
   fecha: Date
 
   @Column({ type: 'varchar', length: 20 })
-  tipo: 'baloto' | 'revancha'
+  tipo: Tipo
 
   @Column({ type: 'int', array: true })
   numeros: number[]

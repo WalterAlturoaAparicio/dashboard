@@ -12,11 +12,12 @@ type SorteoConteo = {
   topNumeros?: string[]
   topSuperbalotas?: string[]
 }
-
-type Resultado = {
-  baloto: SorteoConteo
-  revancha: SorteoConteo
+type SorteoReciente = {
+  date: string
+  numbers: number[]
 }
+
+export type Tipo = 'baloto' | 'revancha'
 
 @Injectable()
 export class BalotoService {
@@ -28,56 +29,41 @@ export class BalotoService {
     private readonly sorteoRepository: Repository<Sorteo>,
   ) {}
 
-  async getResults(targetDate?: string): Promise<Resultado> {
-    const resultado: Resultado = {
-      baloto: { numeros: {}, superbalotas: {}, totalSorteos: 0 },
-      revancha: { numeros: {}, superbalotas: {}, totalSorteos: 0 },
+  async getResumen(tipo: Tipo, targetDate?: string): Promise<SorteoConteo> {
+    if (!['baloto', 'revancha'].includes(tipo)) {
+      throw new Error(
+        'Tipo de sorteo inválido. Debe ser "baloto" o "revancha".',
+      )
     }
 
-    const where: any = {}
+    const where: any = { tipo }
     if (targetDate) {
       const fechaTarget = new Date(targetDate)
       where.fecha = MoreThan(fechaTarget)
     }
 
-    // Consulta todos los sorteos desde la base
-    const sorteos = await this.sorteoRepository.find({ where })
+    const sorteos = await this.sorteoRepository.find({
+      where,
+      order: { fecha: 'ASC' },
+    })
+
+    const conteoNumeros: Record<string, number> = {}
+    const conteoSuperbalotas: Record<string, number> = {}
 
     for (const s of sorteos) {
-      const sorteoConteo =
-        s.tipo === 'baloto'
-          ? resultado.baloto
-          : s.tipo === 'revancha'
-          ? resultado.revancha
-          : null
-      if (!sorteoConteo) continue
-
-      // Contar números (los 5 primeros)
       s.numeros.forEach((n) => {
-        const key = n.toString()
-        sorteoConteo.numeros[key] = (sorteoConteo.numeros[key] || 0) + 1
+        conteoNumeros[n] = (conteoNumeros[n] || 0) + 1
       })
-
-      // Contar superbalota
-      const superKey = s.superbalota.toString()
-      sorteoConteo.superbalotas[superKey] =
-        (sorteoConteo.superbalotas[superKey] || 0) + 1
-
-      sorteoConteo.totalSorteos++
+      conteoSuperbalotas[s.superbalota] =
+        (conteoSuperbalotas[s.superbalota] || 0) + 1
     }
 
     return {
-      ...resultado,
-      baloto: {
-        ...resultado.baloto,
-        topNumeros: this.getTopFrecuentes(resultado.baloto.numeros, 5),
-        topSuperbalotas: this.getMasFrecuentes(resultado.baloto.superbalotas),
-      },
-      revancha: {
-        ...resultado.revancha,
-        topNumeros: this.getTopFrecuentes(resultado.revancha.numeros, 5),
-        topSuperbalotas: this.getMasFrecuentes(resultado.revancha.superbalotas),
-      },
+      totalSorteos: sorteos.length,
+      topNumeros: this.getTopFrecuentes(conteoNumeros, 5),
+      topSuperbalotas: this.getMasFrecuentes(conteoSuperbalotas),
+      numeros: conteoNumeros,
+      superbalotas: conteoSuperbalotas,
     }
   }
 
@@ -185,31 +171,51 @@ export class BalotoService {
     return tickets
   }
 
-  async getResultsFromFirstPage(): Promise<void> {
-    const url = `${this.BASE_URL}?page=1`
-    const { data: html } = await axios.get(url)
-    const $ = cheerio.load(html)
+  async getResultsFromAllPages(): Promise<void> {
+    let page = 1
+    let shouldContinue = true
 
-    const rows = $('#results-table tbody tr').toArray()
-    for (const row of rows) {
-      const date = $(row).find('.creation-date-results').first().text().trim()
-      const typeImg = $(row).find('td img').attr('src') || ''
-      const isBaloto = typeImg.includes('baloto-kind.png')
-      const isRevancha = typeImg.includes('revancha-kind.png')
+    while (shouldContinue) {
+      const url = `${this.BASE_URL}?page=${page}`
+      const { data: html } = await axios.get(url)
+      const $ = cheerio.load(html)
 
-      const tdNumeros = $(row).find('td').eq(2)
-      const rawNumbers = tdNumeros.text().replace(/\s+/g, '')
-      const numbers = rawNumbers.match(/\d+/g) || []
+      const rows = $('#results-table tbody tr').toArray()
 
-      const fechaActual = this.parseSpanishDate(date)
-      const tipo = isBaloto ? 'baloto' : isRevancha ? 'revancha' : null
-      if (!tipo) continue
+      // Si ya no hay filas, detenemos el scraping
+      if (rows.length === 0) {
+        console.log(`No hay más resultados en la página ${page}.`)
+        break
+      }
 
-      const existe = await this.sorteoRepository.findOne({
-        where: { fecha: fechaActual, tipo },
-      })
+      console.log(`Procesando página ${page} (${rows.length} filas)...`)
 
-      if (!existe) {
+      for (const row of rows) {
+        const date = $(row).find('.creation-date-results').first().text().trim()
+        const typeImg = $(row).find('td img').attr('src') || ''
+        const isBaloto = typeImg.includes('baloto-kind.png')
+        const isRevancha = typeImg.includes('revancha-kind.png')
+
+        const tdNumeros = $(row).find('td').eq(2)
+        const rawNumbers = tdNumeros.text().replace(/\s+/g, '')
+        const numbers = rawNumbers.match(/\d+/g) || []
+
+        const fechaActual = this.parseSpanishDate(date)
+        const tipo = isBaloto ? 'baloto' : isRevancha ? 'revancha' : null
+        if (!tipo) continue
+
+        const existe = await this.sorteoRepository.findOne({
+          where: { fecha: fechaActual, tipo },
+        })
+
+        if (existe) {
+          console.log(
+            `Registro existente encontrado (${tipo} - ${fechaActual}), deteniendo...`,
+          )
+          shouldContinue = false
+          break
+        }
+
         await this.sorteoRepository.save({
           fecha: fechaActual,
           tipo,
@@ -217,8 +223,18 @@ export class BalotoService {
           superbalota: Number(numbers[5]),
           fuente: url,
         })
+
+        console.log(`Guardado: ${tipo} - ${fechaActual}`)
       }
+
+      // Si ya encontramos un registro existente, salimos del bucle
+      if (!shouldContinue) break
+
+      // Pasamos a la siguiente página
+      page++
     }
+
+    console.log('Scraping completado.')
   }
 
   async loadHistoricalData(): Promise<void> {
@@ -269,5 +285,24 @@ export class BalotoService {
     }
 
     this.logger.log('Carga histórica finalizada')
+  }
+
+  async getRecientes(tipo: Tipo, cantidad = 3): Promise<SorteoReciente[]> {
+    if (!['baloto', 'revancha'].includes(tipo)) {
+      throw new Error(
+        'Tipo de sorteo inválido. Debe ser "baloto" o "revancha".',
+      )
+    }
+
+    const sorteosRecientes = await this.sorteoRepository.find({
+      where: { tipo },
+      order: { fecha: 'DESC' },
+      take: cantidad,
+    })
+
+    return sorteosRecientes.map((s) => ({
+      date: '' + s.fecha,
+      numbers: [...s.numeros, s.superbalota],
+    }))
   }
 }

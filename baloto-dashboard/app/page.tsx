@@ -13,13 +13,16 @@ export default function DashboardPage() {
     Record<string, number>
   >({})
   const [totalBaloto, setTotalBaloto] = useState<number>(0)
-  const [frequencyRevancha, setFrequencyRevancha] = useState<
+  const [frequencySuperbalota, setFrequencySuperbalota] = useState<
     Record<string, number>
   >({})
   const [generatedTicket, setGeneratedTicket] = useState<number[] | null>(null)
+  const [recentDraws, setRecentDraws] = useState<Record<string, number[]>[]>([])
   const [isLoadingChart, setIsLoadingChart] = useState(false)
   const [isLoadingTicket, setIsLoadingTicket] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
+
+  const [selectedDraw, setSelectedDraw] = useState<number[] | null>(null)
 
   return (
     <div className="min-h-screen bg-background">
@@ -35,7 +38,8 @@ export default function DashboardPage() {
         <ActionButtons
           onCountBaloto={setFrequencyBaloto}
           onCountTotalSorteos={setTotalBaloto}
-          onCountRevancha={setFrequencyRevancha}
+          onCountSuperbalota={setFrequencySuperbalota}
+          onRecentDraws={setRecentDraws}
           onGenerate={setGeneratedTicket}
           onRefresh={setLastUpdate}
           setIsLoadingChart={setIsLoadingChart}
@@ -50,14 +54,32 @@ export default function DashboardPage() {
               title="Baloto"
               data={frequencyBaloto}
               isLoading={isLoadingChart}
+              selectedDraw={selectedDraw?.slice(0, 5) || []}
             />
           </div>
 
           <div className="space-y-6">
-            <RecentDraws />
+            <RecentDraws
+              recentDraws={recentDraws}
+              isLoading={isLoadingChart}
+              onSelectDraw={(numbers: number[]) => setSelectedDraw(numbers)}
+              selectedDraw={selectedDraw}
+            />
             <GeneratedTicket
               ticket={generatedTicket}
               isLoading={isLoadingTicket}
+            />
+          </div>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <FrequencyChart
+              title="Superbalota"
+              data={frequencySuperbalota}
+              isLoading={isLoadingChart}
+              selectedDraw={
+                selectedDraw ? [selectedDraw[selectedDraw.length - 1]] : []
+              }
             />
           </div>
         </div>

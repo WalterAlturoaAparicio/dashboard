@@ -12,7 +12,7 @@ export class BalotoCronService {
   @Cron('0 12 * * 2,4,0')
   async handleCron() {
     this.logger.log('Iniciando scraping programado del Baloto...')
-    await this.balotoService.getResultsFromFirstPage()
+    await this.balotoService.getResultsFromAllPages()
     this.logger.log('Scraping programado finalizado.')
   }
 }

@@ -22,12 +22,14 @@ interface FrequencyChartProps {
   title: string
   data?: Record<string, number>
   isLoading: boolean
+  selectedDraw?: number[]
 }
 
 export function FrequencyChart({
   title,
   data,
   isLoading,
+  selectedDraw = [],
 }: FrequencyChartProps) {
   const chartData = data
     ? Object.entries(data).map(([number, count]) => ({
@@ -44,13 +46,21 @@ export function FrequencyChart({
 
   const finalData = chartData.length > 0 ? chartData : sampleData
 
-  const getBarColor = (count: number) => {
-    const max = Math.max(...finalData.map((d: any) => d.count))
-    const percentage = (count / max) * 100
+  const getBarColor = (number: number, count: number) => {
+    const max = Math.max(...finalData.map((d) => d.count))
+    const percentage = max > 0 ? (count / max) * 100 : 0
 
-    if (percentage > 80) return "hsl(0, 80%, 50%)" // rojo
-    if (percentage > 60) return "hsl(45, 100%, 50%)" // amarillo
-    return "hsl(210, 100%, 56%)"
+    const baseColor =
+      percentage > 80
+        ? "hsl(0, 80%, 50%)" // rojo
+        : percentage > 60
+        ? "hsl(45, 100%, 50%)" // amarillo
+        : "hsl(210, 100%, 56%)" // azul
+    if (!selectedDraw || selectedDraw.length === 0) {
+      return baseColor
+    }
+    const isHighlighted = selectedDraw.includes(number)
+    return isHighlighted ? baseColor : "hsl(0, 0%, 60%, 0.3)" // opaco si no está seleccionado
   }
 
   return (
@@ -97,7 +107,10 @@ export function FrequencyChart({
               />
               <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                 {finalData.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={getBarColor(entry.count)} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={getBarColor(entry.number, entry.count)}
+                  />
                 ))}
               </Bar>
             </BarChart>
