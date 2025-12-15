@@ -1,9 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common'
-import { InjectRepository } from '@nestjs/typeorm'
+import { Injectable } from '@nestjs/common/decorators'
+import { Logger } from '@nestjs/common/services'
+import { MoreThan, Repository } from 'typeorm'
 import axios from 'axios'
 import * as cheerio from 'cheerio'
 import { Sorteo } from './database/sorteo.entity'
-import { MoreThan, Repository } from 'typeorm'
+import { InjectRepository } from '@nestjs/typeorm'
 
 type SorteoConteo = {
   numeros: Record<string, number>
@@ -239,9 +240,8 @@ export class BalotoService {
 
   async loadHistoricalData(): Promise<void> {
     let page = 1
-    let keepScraping = true
 
-    while (keepScraping) {
+    while (true) {
       const url = `${this.BASE_URL}?page=${page}`
       this.logger.debug(`Cargando página histórica ${page}: ${url}`)
 
@@ -280,8 +280,18 @@ export class BalotoService {
         }
       }
 
+      const nextBtn = $('a.btn.btn-yellow')
+        .filter((_, el) => $(el).text().includes('Siguiente'))
+        .attr('href')
+
+      const haySiguiente = nextBtn && nextBtn.includes('?page=')
+
+      if (!haySiguiente) {
+        this.logger.debug(`Fin detectado automáticamente en página ${page}.`)
+        break
+      }
+
       page++
-      keepScraping = page <= 92 // o detectarlo dinámicamente
     }
 
     this.logger.log('Carga histórica finalizada')

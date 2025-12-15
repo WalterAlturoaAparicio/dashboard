@@ -1,6 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common'
-import { Cron } from '@nestjs/schedule'
 import { BalotoService } from './baloto.service'
+import { Injectable } from '@nestjs/common/decorators'
+import { Logger } from '@nestjs/common/services'
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class BalotoCronService {
