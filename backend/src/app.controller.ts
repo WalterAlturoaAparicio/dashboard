@@ -1,50 +1,56 @@
-import { Controller, Get, Post, Put, Query } from '@nestjs/common'
-import { BalotoService, Tipo } from './baloto.service'
+import { Controller, Get, Post, Put, Query, UsePipes } from '@nestjs/common'
+import { AnalysisService } from './analysis/analysis.service'
+import { TicketService } from './ticket/ticket.service'
+import { ScrapingService } from './scraping/scraping.service'
+import { ZodValidationPipe } from './common/pipes/zod-validation.pipe'
+import {
+  ConteoQuerySchema,
+  ConteoQueryDto,
+  RecentDrawsQuerySchema,
+  RecentDrawsQueryDto,
+  GenerarQuerySchema,
+  GenerarQueryDto,
+} from './common/dto'
 
 @Controller()
 export class AppController {
-  constructor(private readonly balotoService: BalotoService) {}
+  constructor(
+    private readonly analysisService: AnalysisService,
+    private readonly ticketService: TicketService,
+    private readonly scrapingService: ScrapingService,
+  ) {}
 
   @Get('conteo')
-  async getConteo(@Query('fecha') fecha?: string, @Query('tipo') tipo?: Tipo) {
-    const conteo = await this.balotoService.getResumen(tipo, fecha)
-    return conteo
+  @UsePipes(new ZodValidationPipe(ConteoQuerySchema))
+  async getConteo(@Query() query: ConteoQueryDto) {
+    return this.analysisService.getResumen(query.tipo, query.fecha)
   }
 
   @Get('recent-draws')
-  async getRecentDraws(
-    @Query('cantidad') cantidad?: number,
-    @Query('tipo') tipo?: 'baloto' | 'revancha',
-  ) {
-    const conteo = await this.balotoService.getRecientes(tipo, cantidad)
-    return conteo
+  @UsePipes(new ZodValidationPipe(RecentDrawsQuerySchema))
+  async getRecentDraws(@Query() query: RecentDrawsQueryDto) {
+    return this.analysisService.getRecientes(query.tipo, query.cantidad)
   }
 
   @Get('generar')
-  async generar(
-    @Query('fecha') fecha?: string,
-    @Query('tipo') tipo?: Tipo,
-    @Query('tickets') maxTickets?: number,
-  ) {
-    const resumen = await this.balotoService.getResumen(tipo, fecha)
-    const numTickets = maxTickets ? maxTickets : 1
-    const tickets = this.balotoService.generarTickets(
-      resumen.numeros,
-      resumen.superbalotas,
-      numTickets,
+  @UsePipes(new ZodValidationPipe(GenerarQuerySchema))
+  async generar(@Query() query: GenerarQueryDto) {
+    return this.ticketService.generarTickets(
+      query.tipo,
+      query.tickets,
+      query.fecha,
     )
-    return tickets
   }
 
   @Put('load')
   async loadHistory() {
-    const conteo = await this.balotoService.loadHistoricalData()
-    return conteo
+    await this.scrapingService.loadHistoricalData()
+    return { message: 'Carga historica completada' }
   }
 
   @Post('refresh')
   async refreshHistory() {
-    const conteo = await this.balotoService.getResultsFromAllPages()
-    return conteo
+    await this.scrapingService.getResultsFromAllPages()
+    return { message: 'Datos actualizados' }
   }
 }

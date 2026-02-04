@@ -1,4 +1,4 @@
-import { Tipo } from 'src/baloto.service'
+import { Tipo } from '../common/types'
 import {
   Entity,
   PrimaryGeneratedColumn,

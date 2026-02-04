@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common'
 import { AppController } from './app.controller'
-import { BalotoService } from './baloto.service'
 import { ScheduleModule } from '@nestjs/schedule'
 import { ConfigModule } from '@nestjs/config'
 import { DatabaseModule } from './database/database.module'
-import { TypeOrmModule } from '@nestjs/typeorm'
-import { Sorteo } from './database/sorteo.entity'
+import { ScrapingModule } from './scraping/scraping.module'
+import { AnalysisModule } from './analysis/analysis.module'
+import { TicketModule } from './ticket/ticket.module'
+import { CronModule } from './cron/cron.module'
 
 @Module({
   imports: [
@@ -14,9 +15,11 @@ import { Sorteo } from './database/sorteo.entity'
     }),
     ScheduleModule.forRoot(),
     DatabaseModule,
-    TypeOrmModule.forFeature([Sorteo]),
+    ScrapingModule,
+    AnalysisModule,
+    TicketModule,
+    CronModule,
   ],
   controllers: [AppController],
-  providers: [BalotoService],
 })
 export class AppModule {}
