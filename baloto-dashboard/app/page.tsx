@@ -7,6 +7,7 @@ import { FrequencyChart } from "@/components/frequency-chart"
 import { GeneratedTicket } from "@/components/generated-ticket"
 import { ActionButtons } from "@/components/action-buttons"
 import { RecentDraws } from "@/components/recent-draws"
+import { ResponsibleGamingDisclaimer } from "@/components/responsible-gaming-disclaimer"
 
 export default function DashboardPage() {
   const [frequencyBaloto, setFrequencyBaloto] = useState<
@@ -17,20 +18,27 @@ export default function DashboardPage() {
     Record<string, number>
   >({})
   const [generatedTicket, setGeneratedTicket] = useState<number[] | null>(null)
-  const [recentDraws, setRecentDraws] = useState<Record<string, number[]>[]>([])
+  const [recentDraws, setRecentDraws] = useState<
+    { date: string; numbers: number[] }[]
+  >([])
   const [isLoadingChart, setIsLoadingChart] = useState(false)
   const [isLoadingTicket, setIsLoadingTicket] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
-
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    new Date("2025-01-02")
+  )
   const [selectedDraw, setSelectedDraw] = useState<number[] | null>(null)
+
+  const hasData = Object.keys(frequencyBaloto).length > 0
 
   return (
     <div className="min-h-screen bg-background">
+      <ResponsibleGamingDisclaimer />
       <Header />
 
       <main className="container mx-auto px-4 py-8 space-y-6">
         <StatsCards
-          totalDraws={frequencyBaloto.length}
+          totalDraws={Object.keys(frequencyBaloto).length}
           lastUpdate={lastUpdate}
           totalSorteos={totalBaloto}
         />
@@ -46,6 +54,8 @@ export default function DashboardPage() {
           setIsLoadingTicket={setIsLoadingTicket}
           isLoadingChart={isLoadingChart}
           isLoadingTicket={isLoadingTicket}
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
         />
 
         <div className="grid gap-6 lg:grid-cols-3">
@@ -55,6 +65,7 @@ export default function DashboardPage() {
               data={frequencyBaloto}
               isLoading={isLoadingChart}
               selectedDraw={selectedDraw?.slice(0, 5) || []}
+              hasData={hasData}
             />
           </div>
 
@@ -80,6 +91,7 @@ export default function DashboardPage() {
               selectedDraw={
                 selectedDraw ? [selectedDraw[selectedDraw.length - 1]] : []
               }
+              hasData={hasData}
             />
           </div>
         </div>
