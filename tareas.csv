@@ -1,0 +1,17 @@
+Epica;Tarea;Descripcion;Tipo;Prioridad;Estimacion_dias
+Epica 0 - Base tecnica;Auditoria tecnica inicial;Revisar estado actual del backend y frontend detectar acoplamientos bugs y validaciones faltantes;Backend;Alta;0.5
+Epica 0 - Base tecnica;Refactor servicios backend;Separar ScrapingService AnalysisService y TicketService;Backend;Alta;1.5
+Epica 0 - Base tecnica;DTOs y validaciones;Agregar class-validator en endpoints y manejo consistente de errores;Backend;Alta;0.5
+Epica 1 - Analisis por fecha;Filtro por fecha en backend;Agregar parametro fechaDesde con validacion y ajuste de queries;Backend;Alta;1
+Epica 1 - Analisis por fecha;Calendar input frontend;Agregar date picker y refetch automatico al cambiar fecha;Frontend;Alta;1
+Epica 2 - UI UX;Mejora visual base;Jerarquia visual estados loading empty error y consistencia visual;Frontend;Media;1
+Epica 2 - UI UX;Animaciones sutiles;Animaciones de transicion al generar tickets y skeleton loaders;Frontend;Media;0.75
+Epica 3 - Juego responsable;Disclaimer visible;Agregar mensaje de juego responsable con aceptacion inicial;Frontend;Alta;0.5
+Epica 4 - Testing;Unit tests backend;Tests para AnalysisService TicketService y validaciones;Testing;Media;1.5
+Epica 4 - Testing;Tests E2E basicos;Tests para endpoints conteo y generar;Testing;Media;0.5
+Epica 5 - Offline y datos;Estrategia offline first;Definir uso de SQLite y Redis y comportamiento offline;Arquitectura;Alta;1
+Epica 5 - Offline y datos;Implementacion SQLite;Configurar TypeORM con SQLite y seed inicial de datos;Backend;Alta;1.5
+Epica 6 - Deploy;Despliegue web;Build Next.js backend dockerizado y configuracion de entornos;DevOps;Alta;1
+Epica 6 - Deploy;Despliegue desktop Electron;Build Electron con SQLite local y empaquetado;DevOps;Media;1.5
+Epica 7 - Mobile futuro;Preparacion arquitectura mobile;Dejar API UI y base de datos listas para mobile;Arquitectura;Baja;0.5
+

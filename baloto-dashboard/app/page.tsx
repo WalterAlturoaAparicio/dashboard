@@ -7,6 +7,8 @@ import { RecentDraws } from "@/components/recent-draws"
 import { CalendarPanel } from "@/components/calendar-panel"
 import { TicketGenerator } from "@/components/ticket-generator"
 import { ResponsibleGamingDisclaimer } from "@/components/responsible-gaming-disclaimer"
+import { OfflineBanner } from "@/components/offline-banner"
+import { useConnectionStatus } from "@/hooks/use-connection-status"
 import axios from "axios"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
@@ -20,6 +22,7 @@ interface Ticket {
 
 export default function DashboardPage() {
   const { toast } = useToast()
+  const { online, error: connectionError } = useConnectionStatus()
   const [frequencyBaloto, setFrequencyBaloto] = useState<
     Record<string, number>
   >({})
@@ -33,6 +36,7 @@ export default function DashboardPage() {
   const [isLoadingChart, setIsLoadingChart] = useState(false)
   const [isLoadingTicket, setIsLoadingTicket] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     new Date("2024-01-01")
   )
@@ -43,6 +47,7 @@ export default function DashboardPage() {
   const fetchData = useCallback(
     async (date?: Date) => {
       setIsLoadingChart(true)
+      setFetchError(null)
       try {
         const fechaParam = date ? format(date, "yyyy-MM-dd") : "2020-01-01"
         const [conteoRes, drawsRes] = await Promise.all([
@@ -63,6 +68,7 @@ export default function DashboardPage() {
           axios.isAxiosError(error) && error.response?.data?.message
             ? error.response.data.message
             : "No se pudieron cargar los datos."
+        setFetchError(errorMessage)
         toast({
           title: "Error",
           description: errorMessage,
@@ -147,7 +153,16 @@ export default function DashboardPage() {
       <ResponsibleGamingDisclaimer />
       <Header />
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-6 space-y-4">
+        {(!online || connectionError) && (
+          <OfflineBanner
+            message={
+              connectionError ||
+              "Sin conexion a internet. Los datos locales siguen disponibles."
+            }
+          />
+        )}
+
         {/* Layout de 3 columnas */}
         <div className="grid gap-6 lg:grid-cols-12">
           {/* Columna izquierda: Calendario + Sorteos Recientes */}
@@ -163,6 +178,8 @@ export default function DashboardPage() {
               onSelectDraw={setSelectedDraw}
               selectedDraw={selectedDraw}
               frequencyData={frequencyBaloto}
+              error={fetchError}
+              onRetry={() => fetchData(selectedDate)}
             />
           </div>
 
@@ -174,6 +191,8 @@ export default function DashboardPage() {
               isLoading={isLoadingChart}
               selectedDraw={selectedDraw?.slice(0, 5) || []}
               hasData={hasData}
+              error={fetchError}
+              onRetry={() => fetchData(selectedDate)}
             />
             <FrequencyChart
               title="Superbalota"
@@ -183,6 +202,8 @@ export default function DashboardPage() {
                 selectedDraw ? [selectedDraw[selectedDraw.length - 1]] : []
               }
               hasData={hasData}
+              error={fetchError}
+              onRetry={() => fetchData(selectedDate)}
             />
           </div>
 
@@ -196,6 +217,7 @@ export default function DashboardPage() {
               isRefreshing={isRefreshing}
               selectedDraw={selectedDraw}
               frequencyData={frequencyBaloto}
+              isOffline={!online}
             />
           </div>
         </div>

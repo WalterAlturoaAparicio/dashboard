@@ -32,6 +32,7 @@ interface TicketGeneratorProps {
   isRefreshing: boolean
   selectedDraw: number[] | null
   frequencyData: Record<string, number>
+  isOffline?: boolean
 }
 
 function getNumberColor(
@@ -76,6 +77,7 @@ export function TicketGenerator({
   isRefreshing,
   selectedDraw,
   frequencyData,
+  isOffline = false,
 }: TicketGeneratorProps) {
   const [cantidad, setCantidad] = useState(1)
   const [error, setError] = useState<string | null>(null)
@@ -159,13 +161,13 @@ export function TicketGenerator({
           variant="outline"
           size="sm"
           onClick={onRefresh}
-          disabled={isLoading || isRefreshing}
+          disabled={isLoading || isRefreshing || isOffline}
           className="w-full transition-all duration-200"
         >
           <RefreshCw
             className={cn("mr-2 h-4 w-4", isRefreshing && "animate-spin")}
           />
-          Actualizar Resultados
+          {isOffline ? "Sin conexion" : "Actualizar Resultados"}
         </Button>
 
         <div className="space-y-3 max-h-[400px] overflow-y-auto">

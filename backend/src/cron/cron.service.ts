@@ -12,7 +12,14 @@ export class CronService {
   @Cron('0 12 * * 2,4,0')
   async handleCron() {
     this.logger.log('Iniciando scraping programado del Baloto...')
-    await this.scrapingService.getResultsFromAllPages()
-    this.logger.log('Scraping programado finalizado.')
+    try {
+      await this.scrapingService.getResultsFromAllPages()
+      this.logger.log('Scraping programado finalizado.')
+    } catch (error) {
+      this.logger.error(
+        `Error en scraping programado: ${error.message}`,
+        error.stack,
+      )
+    }
   }
 }

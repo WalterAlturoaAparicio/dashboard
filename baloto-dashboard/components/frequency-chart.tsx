@@ -19,6 +19,7 @@ import {
 } from "recharts"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/empty-state"
+import { ErrorState } from "@/components/error-state"
 import { BarChart3 } from "lucide-react"
 
 interface FrequencyChartProps {
@@ -27,6 +28,8 @@ interface FrequencyChartProps {
   isLoading: boolean
   selectedDraw?: number[]
   hasData?: boolean
+  error?: string | null
+  onRetry?: () => void
 }
 
 export function FrequencyChart({
@@ -35,6 +38,8 @@ export function FrequencyChart({
   isLoading,
   selectedDraw = [],
   hasData = false,
+  error,
+  onRetry,
 }: FrequencyChartProps) {
   const chartData = data
     ? Object.entries(data).map(([number, count]) => ({
@@ -61,6 +66,17 @@ export function FrequencyChart({
   }
 
   const renderContent = () => {
+    if (error) {
+      return (
+        <ErrorState
+          title="Error al cargar"
+          message={error}
+          onRetry={onRetry}
+          className="h-[400px]"
+        />
+      )
+    }
+
     if (isLoading) {
       return (
         <div className="space-y-4 h-[400px] p-4">

@@ -32,7 +32,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = exceptionResponse as string
       }
     } else if (exception instanceof Error) {
-      this.logger.error(`Error no manejado: ${exception.message}`, exception.stack)
+      this.logger.error(
+        `Error no manejado: ${exception.message}`,
+        exception.stack,
+      )
       message = exception.message
     }
 

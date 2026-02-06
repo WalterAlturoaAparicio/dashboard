@@ -1,0 +1,15 @@
+Epica;Tarea;Descripcion;Tipo;Prioridad;Estimacion_dias
+Epica A - Rediseño UI;Nueva disposicion general del dashboard;Reorganizar layout en tres columnas con sorteos recientes a la izquierda graficas al centro y generador de tickets a la derecha;Frontend;Alta;0.75
+Epica B - Fechas UX;Calendario visible completo;Mostrar calendario inline siempre visible y sincronizado con el estado global;Frontend;Alta;0.5
+Epica B - Fechas UX;Shortcuts de fecha;Agregar botones desde siempre ultimo año y ultimo mes con calculo automatico de fechas;Frontend;Alta;0.5
+Epica C - Acciones;Eliminar botones innecesarios;Eliminar cargar historico y obtener conteo dejando solo generar ticket y actualizar;Frontend;Alta;0.25
+Epica C - Acciones;Generar ticket mejorado;Agregar input para cantidad de tickets validaciones y mostrar resultado en la misma seccion;Frontend;Alta;0.5
+Epica C - Acciones;Tooltip explicativo del generador;Tooltip indicando que el generador es aleatorio ponderado por estadistica historica;Frontend;Media;0.25
+Epica D - Interaccion Grafica;Seleccion de sorteos recientes;Permitir seleccionar sorteos recientes y resaltar sus numeros en las graficas;Frontend;Alta;1
+Epica D - Interaccion Grafica;Sistema de colores unificado;Unificar colores entre graficas sorteos recientes y tickets generados;Frontend;Alta;1
+Epica D - Interaccion Grafica;Colorear tickets segun seleccion;Aplicar el mismo sistema de colores a los numeros de los tickets generados;Frontend;Media;0.5
+Epica E - Scraping y Offline;Modo online y offline;Separar comportamiento entre modo online con scraping y modo offline solo SQLite;Arquitectura;Alta;0.5
+Epica E - Scraping y Offline;Limitacion de uso del scraping;Implementar rate limit logico basado en ultima actualizacion almacenada localmente;Backend;Alta;1
+Epica E - Scraping y Offline;Aislar scraping en backend;Separar endpoint de scraping con control de errores timeout y retry;Backend;Media;0.5
+Epica F - UX Polishing;Estados visuales claros;Agregar estados loading error sin datos y offline en la interfaz;Frontend;Media;0.5
+Epica F - UX Polishing;Micro animaciones utiles;Agregar animaciones sutiles para cambios de fecha seleccion y generacion de tickets;Frontend;Baja;0.5

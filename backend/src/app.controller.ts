@@ -2,6 +2,7 @@ import { Controller, Get, Post, Put, Query, UsePipes } from '@nestjs/common'
 import { AnalysisService } from './analysis/analysis.service'
 import { TicketService } from './ticket/ticket.service'
 import { ScrapingService } from './scraping/scraping.service'
+import { ConnectionService } from './connection/connection.service'
 import { ZodValidationPipe } from './common/pipes/zod-validation.pipe'
 import {
   ConteoQuerySchema,
@@ -18,6 +19,7 @@ export class AppController {
     private readonly analysisService: AnalysisService,
     private readonly ticketService: TicketService,
     private readonly scrapingService: ScrapingService,
+    private readonly connectionService: ConnectionService,
   ) {}
 
   @Get('conteo')
@@ -40,6 +42,15 @@ export class AppController {
       query.tickets,
       query.fecha,
     )
+  }
+
+  @Get('status')
+  async getStatus() {
+    const online = await this.connectionService.checkConnection()
+    return {
+      online,
+      lastScrape: this.scrapingService.getLastScrapeTime(),
+    }
   }
 
   @Put('load')

@@ -12,11 +12,10 @@ export class AnalysisService {
   ) {}
 
   async getResumen(tipo: Tipo, targetDate?: string): Promise<SorteoConteo> {
-    const where: { tipo: Tipo; fecha?: FindOperator<Date> } = { tipo }
+    const where: { tipo: Tipo; fecha?: FindOperator<string> } = { tipo }
 
     if (targetDate) {
-      const fechaTarget = new Date(targetDate)
-      where.fecha = MoreThan(fechaTarget)
+      where.fecha = MoreThan(targetDate)
     }
 
     const sorteos = await this.sorteoRepository.find({

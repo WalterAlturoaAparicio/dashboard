@@ -7,6 +7,7 @@ import { ScrapingModule } from './scraping/scraping.module'
 import { AnalysisModule } from './analysis/analysis.module'
 import { TicketModule } from './ticket/ticket.module'
 import { CronModule } from './cron/cron.module'
+import { ConnectionModule } from './connection/connection.module'
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { CronModule } from './cron/cron.module'
     AnalysisModule,
     TicketModule,
     CronModule,
+    ConnectionModule,
   ],
   controllers: [AppController],
 })

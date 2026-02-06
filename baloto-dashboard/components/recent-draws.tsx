@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/empty-state"
+import { ErrorState } from "@/components/error-state"
 import { Clock, History } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -23,6 +24,8 @@ interface RecentDrawsProps {
   onSelectDraw?: (numbers: number[]) => void
   selectedDraw?: number[] | null
   frequencyData?: Record<string, number>
+  error?: string | null
+  onRetry?: () => void
 }
 
 function getNumberColor(
@@ -63,8 +66,21 @@ export function RecentDraws({
   onSelectDraw,
   selectedDraw,
   frequencyData,
+  error,
+  onRetry,
 }: RecentDrawsProps) {
   const renderContent = () => {
+    if (error) {
+      return (
+        <ErrorState
+          title="Error al cargar"
+          message={error}
+          onRetry={onRetry}
+          className="py-8"
+        />
+      )
+    }
+
     if (isLoading) {
       return (
         <div className="space-y-3">
