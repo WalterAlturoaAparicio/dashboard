@@ -8,6 +8,17 @@ import { AnalysisModule } from './analysis/analysis.module'
 import { TicketModule } from './ticket/ticket.module'
 import { CronModule } from './cron/cron.module'
 import { ConnectionModule } from './connection/connection.module'
+import { SyncModule } from './sync/sync.module'
+import { SyncClientModule } from './sync/sync-client.module'
+
+const isServerMode = (process.env.DB_DRIVER || 'sqlite') === 'postgres'
+
+// Servidor: scraping + cron + sync endpoint
+// Cliente: sync client (consume del servidor)
+const serverModules = isServerMode
+  ? [ScrapingModule, CronModule, SyncModule]
+  : []
+const clientModules = isServerMode ? [] : [SyncClientModule]
 
 @Module({
   imports: [
@@ -16,11 +27,11 @@ import { ConnectionModule } from './connection/connection.module'
     }),
     ScheduleModule.forRoot(),
     DatabaseModule,
-    ScrapingModule,
     AnalysisModule,
     TicketModule,
-    CronModule,
     ConnectionModule,
+    ...serverModules,
+    ...clientModules,
   ],
   controllers: [AppController],
 })

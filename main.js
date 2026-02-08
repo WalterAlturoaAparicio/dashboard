@@ -19,9 +19,16 @@ const createWindow = () => {
 
 app.whenReady().then(() => {
   // 🚀 Levantar backend NestJS
+  const dbPath = path.join(app.getPath("userData"), "baloto.sqlite");
   backendProcess = spawn("node", ["dist/main.js"], {
     cwd: path.join(__dirname, "backend"),
     shell: true,
+    env: {
+      ...process.env,
+      DB_DRIVER: "sqlite",
+      DB_PATH: dbPath,
+      SYNC_SERVER_URL: "http://localhost:3001",
+    },
   });
 
   backendProcess.stdout.on("data", (data) => {

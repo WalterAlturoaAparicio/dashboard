@@ -27,11 +27,15 @@ export class AnalysisService {
     const conteoSuperbalotas: Record<string, number> = {}
 
     for (const s of sorteos) {
-      s.numeros.forEach((n) => {
-        conteoNumeros[n] = (conteoNumeros[n] || 0) + 1
-      })
-      conteoSuperbalotas[s.superbalota] =
-        (conteoSuperbalotas[s.superbalota] || 0) + 1
+      if (s.numeros && Array.isArray(s.numeros)) {
+        s.numeros.forEach((n) => {
+          conteoNumeros[n] = (conteoNumeros[n] || 0) + 1
+        })
+      }
+      if (s.superbalota != null) {
+        conteoSuperbalotas[s.superbalota] =
+          (conteoSuperbalotas[s.superbalota] || 0) + 1
+      }
     }
 
     return {
@@ -50,10 +54,12 @@ export class AnalysisService {
       take: cantidad,
     })
 
-    return sorteosRecientes.map((s) => ({
-      date: '' + s.fecha,
-      numbers: [...s.numeros, s.superbalota],
-    }))
+    return sorteosRecientes
+      .filter((s) => s.numeros && s.numeros.length > 0)
+      .map((s) => ({
+        date: '' + s.fecha,
+        numbers: [...s.numeros, s.superbalota],
+      }))
   }
 
   getTopFrecuentes(conteo: Record<string, number>, top: number): string[] {

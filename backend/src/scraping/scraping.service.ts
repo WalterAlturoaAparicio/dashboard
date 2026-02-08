@@ -18,7 +18,7 @@ export class ScrapingService {
   private readonly BASE_URL = 'https://baloto.com/resultados'
   private readonly logger = new Logger(ScrapingService.name)
   private lastScrapeTime: Date | null = null
-  private readonly MIN_SCRAPE_INTERVAL_MS = 60 * 60 * 1000 // 1 hora
+  private readonly MIN_SCRAPE_INTERVAL_MS = 60 * 1440 * 1000 // 1 hora
 
   private readonly http: AxiosInstance = axios.create({
     timeout: 30_000,

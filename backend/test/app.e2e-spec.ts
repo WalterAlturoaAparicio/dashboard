@@ -9,8 +9,8 @@ import { Sorteo } from '../src/database/sorteo.entity'
 import { AppController } from '../src/app.controller'
 import { AnalysisModule } from '../src/analysis/analysis.module'
 import { TicketModule } from '../src/ticket/ticket.module'
-import { ScrapingModule } from '../src/scraping/scraping.module'
 import { ConnectionModule } from '../src/connection/connection.module'
+import { SyncModule } from '../src/sync/sync.module'
 import { AllExceptionsFilter } from '../src/common/filters/http-exception.filter'
 
 const seedData: Partial<Sorteo>[] = [
@@ -69,8 +69,8 @@ describe('App (e2e)', () => {
         TypeOrmModule.forFeature([Sorteo]),
         AnalysisModule,
         TicketModule,
-        ScrapingModule,
         ConnectionModule,
+        SyncModule,
       ],
       controllers: [AppController],
     }).compile()
@@ -87,7 +87,9 @@ describe('App (e2e)', () => {
     await app.close()
   })
 
-  describe('GET /conteo', () => {
+  // === Tests offline: conteo y generacion funcionan con datos locales ===
+
+  describe('GET /conteo (offline - datos locales)', () => {
     it('debe retornar conteo de frecuencias para baloto', () => {
       return request(app.getHttpServer())
         .get('/conteo?tipo=baloto')
@@ -114,7 +116,7 @@ describe('App (e2e)', () => {
         .get('/conteo?tipo=baloto&fecha=2024-01-12')
         .expect(200)
         .expect((res) => {
-          expect(res.body.totalSorteos).toBe(2) // solo 13 y 17
+          expect(res.body.totalSorteos).toBe(2)
         })
     })
 
@@ -135,14 +137,13 @@ describe('App (e2e)', () => {
     })
   })
 
-  describe('GET /recent-draws', () => {
+  describe('GET /recent-draws (offline - datos locales)', () => {
     it('debe retornar sorteos recientes por defecto (3)', () => {
       return request(app.getHttpServer())
         .get('/recent-draws?tipo=baloto')
         .expect(200)
         .expect((res) => {
           expect(res.body).toHaveLength(3)
-          // Los numeros deben incluir superbalota (6 numeros total)
           expect(res.body[0].numbers).toHaveLength(6)
         })
     })
@@ -161,8 +162,8 @@ describe('App (e2e)', () => {
     })
   })
 
-  describe('GET /generar', () => {
-    it('debe generar tickets de baloto', () => {
+  describe('GET /generar (offline - datos locales)', () => {
+    it('debe generar tickets con datos locales', () => {
       return request(app.getHttpServer())
         .get('/generar?tipo=baloto')
         .expect(200)
@@ -189,16 +190,50 @@ describe('App (e2e)', () => {
     })
   })
 
+  // === Tests de status ===
+
   describe('GET /status', () => {
-    it('debe retornar el estado de conexion', () => {
+    it('debe retornar estado con dbDriver y campos de sync', () => {
       return request(app.getHttpServer())
         .get('/status')
         .expect(200)
         .expect((res) => {
           expect(res.body).toHaveProperty('online')
-          expect(res.body).toHaveProperty('lastScrape')
+          expect(res.body).toHaveProperty('dbDriver')
+          expect(res.body).toHaveProperty('lastSynced')
+          expect(res.body).toHaveProperty('syncing')
           expect(typeof res.body.online).toBe('boolean')
         })
+    })
+  })
+
+  // === Tests de sync endpoint (modo servidor) ===
+
+  describe('GET /sync/sorteos', () => {
+    it('debe rechazar sin parametro after', () => {
+      return request(app.getHttpServer()).get('/sync/sorteos').expect(400)
+    })
+
+    it('debe rechazar formato de fecha invalido', () => {
+      return request(app.getHttpServer())
+        .get('/sync/sorteos?after=fecha-invalida')
+        .expect(400)
+    })
+
+    it('debe retornar sorteos y aplicar rate limit en segunda llamada', async () => {
+      // Primera llamada: retorna sorteos
+      const res = await request(app.getHttpServer())
+        .get('/sync/sorteos?after=2000-01-01T00:00:00Z')
+        .expect(200)
+
+      expect(res.body.sorteos).toBeDefined()
+      expect(res.body.syncedAt).toBeDefined()
+      expect(res.body.count).toBe(5)
+
+      // Segunda llamada inmediata: rate limit
+      await request(app.getHttpServer())
+        .get('/sync/sorteos?after=2099-01-01T00:00:00Z')
+        .expect(429)
     })
   })
 })

@@ -14,21 +14,25 @@ export class Sorteo {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   fecha: string
 
   @Column({ type: 'varchar', length: 20 })
   tipo: Tipo
 
-  @Column({ type: 'text', transformer: new JsonArrayTransformer() })
+  @Column({
+    type: 'text',
+    transformer: new JsonArrayTransformer(),
+    nullable: true,
+  })
   numeros: number[]
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', nullable: true })
   superbalota: number
 
   @Column({ type: 'text', nullable: true })
   fuente?: string
 
-  @CreateDateColumn({ name: 'timestamp_guardado', type: 'datetime' })
+  @CreateDateColumn({ name: 'timestamp_guardado' })
   timestampGuardado: Date
 }

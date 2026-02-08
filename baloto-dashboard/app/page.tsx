@@ -8,6 +8,7 @@ import { CalendarPanel } from "@/components/calendar-panel"
 import { TicketGenerator } from "@/components/ticket-generator"
 import { ResponsibleGamingDisclaimer } from "@/components/responsible-gaming-disclaimer"
 import { OfflineBanner } from "@/components/offline-banner"
+import { StatusIndicator } from "@/components/status-indicator"
 import { useConnectionStatus } from "@/hooks/use-connection-status"
 import axios from "axios"
 import { useToast } from "@/hooks/use-toast"
@@ -22,7 +23,14 @@ interface Ticket {
 
 export default function DashboardPage() {
   const { toast } = useToast()
-  const { online, error: connectionError } = useConnectionStatus()
+  const {
+    online,
+    dbDriver,
+    lastSynced,
+    syncing,
+    error: connectionError,
+    triggerSync,
+  } = useConnectionStatus()
   const [frequencyBaloto, setFrequencyBaloto] = useState<
     Record<string, number>
   >({})
@@ -84,12 +92,19 @@ export default function DashboardPage() {
   const handleRefresh = async () => {
     setIsRefreshing(true)
     try {
-      await axios.post(`${API_URL}/refresh`)
-      toast({
-        title: "Resultados sincronizados",
-        description: "Los datos mas recientes han sido descargados.",
-      })
-      // Recargar datos despues de sincronizar
+      if (dbDriver === "sqlite") {
+        await triggerSync()
+        toast({
+          title: "Sincronizacion iniciada",
+          description: "Sincronizando datos desde el servidor...",
+        })
+      } else {
+        await axios.post(`${API_URL}/refresh`)
+        toast({
+          title: "Resultados sincronizados",
+          description: "Los datos mas recientes han sido descargados.",
+        })
+      }
       await fetchData(selectedDate)
     } catch (error: unknown) {
       const errorMessage =
@@ -154,12 +169,25 @@ export default function DashboardPage() {
       <Header />
 
       <main className="container mx-auto px-4 py-6 space-y-4">
+        <div className="flex justify-end">
+          <StatusIndicator
+            online={online}
+            dbDriver={dbDriver}
+            lastSynced={lastSynced}
+            syncing={syncing}
+          />
+        </div>
+
         {(!online || connectionError) && (
           <OfflineBanner
             message={
               connectionError ||
               "Sin conexion a internet. Los datos locales siguen disponibles."
             }
+            dbDriver={dbDriver}
+            lastSynced={lastSynced}
+            syncing={syncing}
+            onSync={triggerSync}
           />
         )}
 
@@ -214,7 +242,7 @@ export default function DashboardPage() {
               isLoading={isLoadingTicket}
               onGenerate={handleGenerate}
               onRefresh={handleRefresh}
-              isRefreshing={isRefreshing}
+              isRefreshing={isRefreshing || syncing}
               selectedDraw={selectedDraw}
               frequencyData={frequencyBaloto}
               isOffline={!online}
