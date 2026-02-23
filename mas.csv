@@ -1,0 +1,18 @@
+Nombre;Descripcion;Estado;Prioridad;Fase
+Separar API como fuente unica de verdad;Eliminar cualquier configuracion que permita usar SQLite en el backend y forzar PostgreSQL como unico motor en la API;Por hacer;Alta;Setup
+Eliminar SyncClientService del backend;Remover logica de polling axios y sincronizacion cliente del proyecto API ya que el backend no debe comportarse como cliente;Por hacer;Alta;Setup
+Simplificar DatabaseModule del backend;Refactorizar DatabaseModule para eliminar logica condicional de DB_DRIVER y dejar configuracion limpia solo para PostgreSQL;Por hacer;Alta;Setup
+Crear estructura monorepo clara;Reorganizar proyecto en estructura tipo apps/api apps/mobile apps/desktop libs/shared separando responsabilidades;Por hacer;Media;Setup
+Consolidar endpoint GET /sync/sorteos;Asegurar que el endpoint soporte parametro after ordene por timestamp_guardado ASC y sea eficiente;Por hacer;Alta;Sincronizacion
+Agregar indice en timestamp_guardado;Crear indice en PostgreSQL para mejorar performance del filtro por fecha en sincronizacion incremental;Por hacer;Alta;Sincronizacion
+Definir contrato DTO de sincronizacion;Crear DTO explicito para respuesta de sync evitando exponer entidades directamente;Por hacer;Media;Sincronizacion
+Implementar SQLite local en mobile;Configurar base de datos SQLite local en entorno mobile o desktop segun stack elegido;Por hacer;Alta;Offline
+Migrar SyncClientService a mobile;Mover logica de sincronizacion cliente fuera del backend y adaptarla al entorno mobile o desktop;Por hacer;Alta;Offline
+Implementar estrategia upsert en SQLite;Reemplazar logica manual de verificacion por insercion con upsert basado en fecha y tipo para eficiencia;Por hacer;Media;Offline
+Persistir lastSyncedAt en storage local;Guardar timestamp de ultima sincronizacion en almacenamiento persistente en lugar de memoria;Por hacer;Alta;Offline
+Preparar modulo de usuarios placeholder;Crear estructura base para futura autenticacion sin implementacion completa;Por hacer;Baja;Auth
+Desacoplar entidades de contratos API;Implementar mapeadores a DTO para evitar retornar entidades TypeORM directamente;Por hacer;Media;Arquitectura
+Definir estrategia de versionado de API;Preparar prefijo api/v1 para evitar romper clientes en el futuro;Por hacer;Media;Arquitectura
+Auditar dependencias innecesarias en API;Eliminar axios y cualquier dependencia cliente que no corresponda al backend;Por hacer;Alta;Refactor
+Documentar flujo de sincronizacion;Crear documentacion tecnica clara explicando arquitectura offline first y responsabilidades;Por hacer;Media;Documentacion
+

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(yarn build)",
+      "Bash(yarn test)",
+      "Bash(yarn test:e2e:*)",
+      "Bash(pnpm build:*)",
+      "Bash(yarn test:*)",
+      "Bash(echo:*)"
+    ]
+  }
+}
