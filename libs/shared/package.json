@@ -1,0 +1,9 @@
+{
+  "name": "@baloto/shared",
+  "version": "1.0.0",
+  "description": "Shared types for Baloto Generator",
+  "main": "src/types/index.ts",
+  "types": "src/types/index.ts",
+  "license": "UNLICENSED",
+  "private": true
+}
