@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "Colombian lottery analysis, scraping and ticket generation",
   "scripts": {
-    "build": "cd apps/api && yarn install && yarn build",
+    "build": "cd apps/api && npm install && npm run build",
     "start": "cd apps/api && node dist/main",
     "start:prod": "cd apps/api && node dist/main",
-    "start:dev": "cd apps/api && yarn start:dev",
-    "test": "cd apps/api && yarn test"
+    "start:dev": "cd apps/api && npm run start:dev",
+    "test": "cd apps/api && npm test"
   },
   "engines": {
     "node": ">=18"
