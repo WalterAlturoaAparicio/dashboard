@@ -14,7 +14,7 @@ Colombian lottery (Baloto) analysis and ticket generation. Scrapes results from 
 
 ```bash
 # API (port 3001)
-cd apps/api && yarn install && yarn start:dev
+cd apps/api && npm install && npm run start:dev
 
 # Web (port 3000)
 cd apps/web && pnpm install && pnpm dev
@@ -34,7 +34,7 @@ See [docs/getting-started.md](docs/getting-started.md) for full setup instructio
 Deployed on Railway using `railway.toml` at the repo root.
 
 ```
-Build:  cd apps/api && yarn install && yarn build
+Build:  cd apps/api && npm install && npm run build
 Start:  cd apps/api && node dist/main
 Health: GET /api/v1/status
 ```
@@ -43,6 +43,6 @@ Health: GET /api/v1/status
 
 ```bash
 cd apps/api
-yarn test        # 47 unit tests
-yarn test:e2e    # 16 E2E tests
+npm test          # 47 unit tests
+npm run test:e2e  # 16 E2E tests
 ```

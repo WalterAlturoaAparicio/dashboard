@@ -45,7 +45,7 @@
 
 ### Build command
 ```
-cd apps/api && yarn install && yarn build
+cd apps/api && npm install && npm run build
 ```
 
 NestJS compiles TypeScript to `apps/api/dist/`. Nixpacks detects Node.js automatically.
@@ -55,7 +55,7 @@ NestJS compiles TypeScript to `apps/api/dist/`. Nixpacks detects Node.js automat
 cd apps/api && node dist/main
 ```
 
-Equivalent to `yarn start:prod` in `apps/api/`.
+Equivalent to `npm run start:prod` in `apps/api/`.
 
 ### Health check
 ```
