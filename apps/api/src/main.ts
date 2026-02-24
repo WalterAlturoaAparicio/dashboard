@@ -9,10 +9,12 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter())
   app.setGlobalPrefix('api/v1')
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
   })
-  await app.listen(3001)
+  const port = process.env.PORT || 3001
+  await app.listen(port)
+  console.log(`API running on port ${port}`)
 }
 bootstrap()
