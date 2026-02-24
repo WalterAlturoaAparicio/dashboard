@@ -1,16 +1,15 @@
 {
-  "name": "frontend",
+  "name": "baloto-generator",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Colombian lottery analysis, scraping and ticket generation",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "cd apps/api && yarn install && yarn build",
+    "start": "cd apps/api && node dist/main",
+    "start:prod": "cd apps/api && node dist/main",
+    "start:dev": "cd apps/api && yarn start:dev",
+    "test": "cd apps/api && yarn test"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "electron": "^38.1.0",
-    "electron-builder": "^26.0.12"
+  "engines": {
+    "node": ">=18"
   }
 }
