@@ -45,7 +45,7 @@
 
 ### Build command
 ```
-cd apps/api && npm install && npm run build
+cd apps/api && npm install --legacy-peer-deps && npm run build
 ```
 
 NestJS compiles TypeScript to `apps/api/dist/`. Nixpacks detects Node.js automatically.

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Colombian lottery analysis, scraping and ticket generation",
   "scripts": {
-    "build": "cd apps/api && npm install && npm run build",
+    "build": "cd apps/api && npm install --legacy-peer-deps && npm run build",
     "start": "cd apps/api && node dist/main",
     "start:prod": "cd apps/api && node dist/main",
     "start:dev": "cd apps/api && npm run start:dev",

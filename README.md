@@ -34,7 +34,7 @@ See [docs/getting-started.md](docs/getting-started.md) for full setup instructio
 Deployed on Railway using `railway.toml` at the repo root.
 
 ```
-Build:  cd apps/api && npm install && npm run build
+Build:  cd apps/api && npm install --legacy-peer-deps && npm run build
 Start:  cd apps/api && node dist/main
 Health: GET /api/v1/status
 ```
