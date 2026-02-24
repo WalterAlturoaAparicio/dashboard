@@ -51,16 +51,18 @@ export class SyncService {
   private toDto(sorteo: Sorteo): SorteoDto {
     return {
       id: sorteo.id,
-      fecha: sorteo.fecha instanceof Date
-        ? sorteo.fecha.toISOString().split('T')[0]
-        : String(sorteo.fecha),
+      fecha:
+        sorteo.fecha instanceof Date
+          ? sorteo.fecha.toISOString().split('T')[0]
+          : String(sorteo.fecha),
       tipo: sorteo.tipo,
       numeros: sorteo.numeros,
       superbalota: sorteo.superbalota,
       fuente: sorteo.fuente,
-      timestampGuardado: sorteo.timestampGuardado instanceof Date
-        ? sorteo.timestampGuardado.toISOString()
-        : String(sorteo.timestampGuardado),
+      timestampGuardado:
+        sorteo.timestampGuardado instanceof Date
+          ? sorteo.timestampGuardado.toISOString()
+          : String(sorteo.timestampGuardado),
     }
   }
 }
