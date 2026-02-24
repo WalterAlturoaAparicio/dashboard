@@ -73,6 +73,63 @@ export class ScrapingService {
     return `${y}-${m}-${d}`
   }
 
+  private parseRow(
+    $: cheerio.CheerioAPI,
+    row: any,
+  ): {
+    fechaStr: string
+    tipo: Tipo | null
+    numeros: number[]
+    superbalota: number
+  } | null {
+    const date = $(row).find('.creation-date-results').first().text().trim()
+    const typeImg = $(row).find('td img').attr('src') || ''
+    const isBaloto = typeImg.includes('baloto-kind.png')
+    const isRevancha = typeImg.includes('revancha-kind.png')
+
+    const rawNumbers = $(row).find('td').eq(2).text().replace(/\s+/g, '')
+    const numbers = rawNumbers.match(/\d+/g) || []
+
+    const fechaParsed = parseSpanishDate(date)
+    const fechaStr = this.formatDate(fechaParsed)
+    const tipo: Tipo | null = isBaloto
+      ? 'baloto'
+      : isRevancha
+      ? 'revancha'
+      : null
+
+    if (!tipo) return null
+
+    return {
+      fechaStr,
+      tipo,
+      numeros: numbers.slice(0, 5).map(Number),
+      superbalota: Number(numbers[5]),
+    }
+  }
+
+  /**
+   * Inserts a sorteo only if (fecha, tipo) doesn't already exist.
+   * Returns true if inserted, false if it was a duplicate (skipped).
+   */
+  private async insertIfNotExists(
+    fechaStr: string,
+    tipo: Tipo,
+    numeros: number[],
+    superbalota: number,
+    fuente: string,
+  ): Promise<boolean> {
+    const fechaDate = new Date(fechaStr)
+    const result = await this.sorteoRepository
+      .createQueryBuilder()
+      .insert()
+      .into(Sorteo)
+      .values({ fecha: fechaDate, tipo, numeros, superbalota, fuente })
+      .orIgnore()
+      .execute()
+    return (result.raw.rowCount ?? 0) > 0
+  }
+
   async getResultsFromAllPages(): Promise<void> {
     this.checkRateLimit()
 
@@ -86,7 +143,6 @@ export class ScrapingService {
 
         const html = await this.fetchWithRetry(url)
         const $ = cheerio.load(html)
-
         const rows = $('#results-table tbody tr').toArray()
 
         if (rows.length === 0) {
@@ -97,48 +153,25 @@ export class ScrapingService {
         this.logger.debug(`Procesando pagina ${page} (${rows.length} filas)...`)
 
         for (const row of rows) {
-          const date = $(row)
-            .find('.creation-date-results')
-            .first()
-            .text()
-            .trim()
-          const typeImg = $(row).find('td img').attr('src') || ''
-          const isBaloto = typeImg.includes('baloto-kind.png')
-          const isRevancha = typeImg.includes('revancha-kind.png')
+          const parsed = this.parseRow($, row)
+          if (!parsed) continue
 
-          const tdNumeros = $(row).find('td').eq(2)
-          const rawNumbers = tdNumeros.text().replace(/\s+/g, '')
-          const numbers = rawNumbers.match(/\d+/g) || []
+          const { fechaStr, tipo, numeros, superbalota } = parsed
+          const inserted = await this.insertIfNotExists(
+            fechaStr,
+            tipo,
+            numeros,
+            superbalota,
+            url,
+          )
 
-          const fechaParsed = parseSpanishDate(date)
-          const fechaStr = this.formatDate(fechaParsed)
-          const tipo: Tipo | null = isBaloto
-            ? 'baloto'
-            : isRevancha
-            ? 'revancha'
-            : null
-
-          if (!tipo) continue
-
-          const existe = await this.sorteoRepository.findOne({
-            where: { fecha: new Date(fechaStr), tipo },
-          })
-
-          if (existe) {
+          if (!inserted) {
             this.logger.debug(
-              `Registro existente (${tipo} - ${fechaStr}), deteniendo...`,
+              `Registro ya existente (${tipo} - ${fechaStr}), deteniendo...`,
             )
             shouldContinue = false
             break
           }
-
-          await this.sorteoRepository.save({
-            fecha: fechaStr,
-            tipo,
-            numeros: numbers.slice(0, 5).map(Number),
-            superbalota: Number(numbers[5]),
-            fuente: url,
-          })
 
           this.logger.debug(`Guardado: ${tipo} - ${fechaStr}`)
         }
@@ -180,47 +213,21 @@ export class ScrapingService {
 
         const html = await this.fetchWithRetry(url)
         const $ = cheerio.load(html)
-
         const rows = $('#results-table tbody tr').toArray()
         if (rows.length === 0) break
 
         for (const row of rows) {
-          const date = $(row)
-            .find('.creation-date-results')
-            .first()
-            .text()
-            .trim()
-          const typeImg = $(row).find('td img').attr('src') || ''
-          const isBaloto = typeImg.includes('baloto-kind.png')
-          const isRevancha = typeImg.includes('revancha-kind.png')
+          const parsed = this.parseRow($, row)
+          if (!parsed) continue
 
-          const tdNumeros = $(row).find('td').eq(2)
-          const rawNumbers = tdNumeros.text().replace(/\s+/g, '')
-          const numbers = rawNumbers.match(/\d+/g) || []
-
-          const fechaParsed = parseSpanishDate(date)
-          const fechaStr = this.formatDate(fechaParsed)
-          const tipo: Tipo | null = isBaloto
-            ? 'baloto'
-            : isRevancha
-            ? 'revancha'
-            : null
-
-          if (!tipo) continue
-
-          const existe = await this.sorteoRepository.findOne({
-            where: { fecha: new Date(fechaStr), tipo },
-          })
-
-          if (!existe) {
-            await this.sorteoRepository.save({
-              fecha: fechaStr,
-              tipo,
-              numeros: numbers.slice(0, 5).map(Number),
-              superbalota: Number(numbers[5]),
-              fuente: url,
-            })
-          }
+          const { fechaStr, tipo, numeros, superbalota } = parsed
+          await this.insertIfNotExists(
+            fechaStr,
+            tipo,
+            numeros,
+            superbalota,
+            url,
+          )
         }
 
         const nextBtn = $('a.btn.btn-yellow')

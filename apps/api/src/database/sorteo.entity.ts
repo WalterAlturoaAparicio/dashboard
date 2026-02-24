@@ -7,7 +7,6 @@ import {
   CreateDateColumn,
   Index,
 } from 'typeorm'
-import { NumericArrayTransformer } from './transformers/numeric-array.transformer'
 
 @Entity('sorteo')
 @Unique(['fecha', 'tipo'])
@@ -21,7 +20,7 @@ export class Sorteo {
   @Column({ type: 'varchar', length: 20 })
   tipo: Tipo
 
-  @Column({ type: 'text', transformer: new NumericArrayTransformer() })
+  @Column({ type: 'int', array: true })
   numeros: number[]
 
   @Column({ type: 'int' })

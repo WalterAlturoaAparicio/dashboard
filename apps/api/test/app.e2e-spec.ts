@@ -159,7 +159,9 @@ describe('App (e2e)', () => {
     })
 
     it('debe rechazar sin tipo', () => {
-      return request(app.getHttpServer()).get('/api/v1/recent-draws').expect(400)
+      return request(app.getHttpServer())
+        .get('/api/v1/recent-draws')
+        .expect(400)
     })
   })
 
@@ -206,7 +208,9 @@ describe('App (e2e)', () => {
 
   describe('GET /api/v1/sync/sorteos', () => {
     it('debe rechazar sin parametro after', () => {
-      return request(app.getHttpServer()).get('/api/v1/sync/sorteos').expect(400)
+      return request(app.getHttpServer())
+        .get('/api/v1/sync/sorteos')
+        .expect(400)
     })
 
     it('debe rechazar formato de fecha invalido', () => {

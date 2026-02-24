@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Query,
-  UsePipes,
-} from '@nestjs/common'
+import { Controller, Get, Post, Put, Query, UsePipes } from '@nestjs/common'
 import { AnalysisService } from './analysis/analysis.service'
 import { TicketService } from './ticket/ticket.service'
 import { ScrapingService } from './scraping/scraping.service'
