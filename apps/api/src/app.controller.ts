@@ -51,6 +51,11 @@ export class AppController {
     )
   }
 
+  @Get('health')
+  getHealth() {
+    return { status: 'ok' }
+  }
+
   @Get('status')
   async getStatus() {
     const online = await this.connectionService.checkConnection()
